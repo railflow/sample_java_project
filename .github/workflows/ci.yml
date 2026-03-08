@@ -94,4 +94,5 @@ jobs:
       - uses: railflow/buildbutler-action@v3
         with:
           api-key: ${{ secrets.BUILDBUTLER_API_KEY }}
+          github-token: ${{ github.token }}
           test-results: 'build/test-results/combined/TEST-combined.xml'
