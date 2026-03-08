@@ -87,7 +87,7 @@ jobs:
         with:
           name: test-results
           path: build/test-results/
-      - uses: railflow/buildbutler-action@v2
+      - uses: railflow/buildbutler-action@v3
         with:
           api-key: ${{ secrets.BUILDBUTLER_API_KEY }}
           test-results: 'build/test-results/**/*.xml'
