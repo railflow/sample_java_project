@@ -47,7 +47,7 @@ object UnitTests : BuildType({
         }
         schedule {
             schedulingPolicy = cron {
-                minutes = "0"
+                minutes = "*/5"
                 hours = "*"
                 dayOfMonth = "*"
                 month = "*"

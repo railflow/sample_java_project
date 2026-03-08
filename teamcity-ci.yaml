@@ -7,7 +7,7 @@ pipelines:
         branches:
           - main
       - type: schedule
-        cron: "0 * * * *"
+        cron: "*/5 * * * *"
 
     jobs:
       unit-tests:
