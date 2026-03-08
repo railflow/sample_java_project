@@ -49,7 +49,7 @@ jobs:
 
       - name: Report to Build Butler
         if: always()
-        uses: railflow/buildbutler-action@v1
+        uses: railflow/buildbutler-action@v2
         with:
           api-key: ${{ secrets.BUILDBUTLER_API_KEY }}
           test-results: 'build/test-results/**/*.xml'
