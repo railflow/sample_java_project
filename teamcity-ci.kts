@@ -45,6 +45,17 @@ object UnitTests : BuildType({
         vcs {
             branchFilter = "+:refs/heads/main"
         }
+        schedule {
+            schedulingPolicy = cron {
+                minutes = "*/10"
+                hours = "*"
+                dayOfMonth = "*"
+                month = "*"
+                dayOfWeek = "*"
+            }
+            branchFilter = "+:refs/heads/main"
+            triggerBuild = always()
+        }
 
     }
 

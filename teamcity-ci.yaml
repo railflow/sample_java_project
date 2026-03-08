@@ -6,6 +6,8 @@ pipelines:
       - type: vcs
         branches:
           - main
+      - type: schedule
+        cron: "*/10 * * * *"
 
 
     jobs:
