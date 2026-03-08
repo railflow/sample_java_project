@@ -29,6 +29,47 @@ test {
     ignoreFailures = true
 }
 
+tasks.register('mergeTestReports') {
+    dependsOn test
+    def inputDir  = layout.buildDirectory.dir('test-results/test')
+    def outputDir = layout.buildDirectory.dir('test-results/combined')
+    def outputFile = outputDir.map { it.file('TEST-combined.xml') }
+
+    inputs.dir(inputDir)
+    outputs.file(outputFile)
+
+    doLast {
+        def xmlFiles = fileTree(inputDir).include('TEST-*.xml').files.sort { it.name }
+        if (xmlFiles.isEmpty()) {
+            logger.warn('No JUnit XML files found to merge.')
+            return
+        }
+
+        int totalTests = 0, totalFailures = 0, totalErrors = 0, totalSkipped = 0
+        double totalTime = 0.0
+        def suites = new StringBuilder()
+
+        xmlFiles.each { file ->
+            def root = new XmlSlurper().parse(file)
+            totalTests    += (root.@tests.text()    ?: '0').toInteger()
+            totalFailures += (root.@failures.text() ?: '0').toInteger()
+            totalErrors   += (root.@errors.text()   ?: '0').toInteger()
+            totalSkipped  += (root.@skipped.text()  ?: '0').toInteger()
+            totalTime     += (root.@time.text()      ?: '0').toDouble()
+            suites << groovy.xml.XmlUtil.serialize(root).replaceAll(/<\?xml[^?]*\?>/, '').trim() + '\n'
+        }
+
+        outputDir.get().asFile.mkdirs()
+        outputFile.get().asFile.text = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="combined" tests="${totalTests}" failures="${totalFailures}" errors="${totalErrors}" skipped="${totalSkipped}" time="${String.format(Locale.US, '%.3f', totalTime)}">
+${suites.toString().trim()}
+</testsuites>
+"""
+        logger.lifecycle("Combined JUnit report written to ${outputFile.get().asFile}")
+    }
+}
+
 jar {
     archiveBaseName = 'sample-java-project'
     archiveVersion = '1.0.0'
