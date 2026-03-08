@@ -1,0 +1,82 @@
+stages:
+  - test
+  - build
+  - docker
+  - deploy
+  - report
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+.gradle-cache: &gradle-cache
+  cache:
+    key: "gradle-$CI_RUNNER_OS-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - .gradle/caches
+      - .gradle/wrapper
+
+unit-tests:
+  stage: test
+  image: eclipse-temurin:17-jdk
+  <<: *gradle-cache
+  script:
+    - ./gradlew mergeTestReports --continue
+  artifacts:
+    when: always
+    name: test-results
+    paths:
+      - build/test-results/combined/TEST-combined.xml
+    reports:
+      junit: build/test-results/combined/TEST-combined.xml
+  allow_failure: true
+
+build-jar:
+  stage: build
+  image: eclipse-temurin:17-jdk
+  <<: *gradle-cache
+  script:
+    - ./gradlew jar
+  artifacts:
+    name: app-jar
+    paths:
+      - build/libs/*.jar
+  needs:
+    - job: unit-tests
+      optional: true
+
+docker-build:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t sample-java-project:$CI_COMMIT_SHA .
+  needs:
+    - job: build-jar
+      artifacts: true
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying to staging..."
+    - echo "Health check..."
+    - echo "Deploy complete"
+  needs:
+    - job: docker-build
+
+report-to-buildbutler:
+  stage: report
+  script:
+    - |
+      curl -X POST "https://app.buildbutler.io/api/v1/results" \
+        -H "Authorization: Bearer $BUILDBUTLER_API_KEY" \
+        -F "file=@build/test-results/combined/TEST-combined.xml"
+  needs:
+    - job: unit-tests
+      artifacts: true
+  when: always

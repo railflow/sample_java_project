@@ -1,0 +1,95 @@
+version: "1.0"
+
+pipelines:
+  CI_Pipeline:
+    triggers:
+      - type: vcs
+        branches:
+          - main
+      - type: schedule
+        cron: "0 * * * *"
+
+    jobs:
+      unit-tests:
+        name: Unit Tests
+        run-on:
+          - type: cloud-image
+            image: eclipse-temurin:17-jdk
+        steps:
+          - name: Run tests
+            script: ./gradlew mergeTestReports --continue
+        continue-on-error: true
+        cache:
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          key: gradle-%teamcity.agent.jvm.os.name%
+        artifacts:
+          publish:
+            - path: build/test-results/combined/TEST-combined.xml
+              name: test-results
+        test-report:
+          type: junit
+          path: build/test-results/combined/TEST-combined.xml
+
+      build-jar:
+        name: Build JAR
+        run-on:
+          - type: cloud-image
+            image: eclipse-temurin:17-jdk
+        depends-on:
+          - unit-tests
+        steps:
+          - name: Build JAR
+            script: ./gradlew jar
+        cache:
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          key: gradle-%teamcity.agent.jvm.os.name%
+        artifacts:
+          publish:
+            - path: build/libs/*.jar
+              name: app-jar
+
+      docker-build:
+        name: Docker Build
+        run-on:
+          - type: cloud-image
+            image: docker:latest
+        depends-on:
+          - build-jar
+        steps:
+          - name: Build Docker image
+            script: docker build -t sample-java-project:%build.vcs.number% .
+        artifacts:
+          use:
+            - name: app-jar
+              path: build/libs/
+
+      deploy:
+        name: Deploy
+        depends-on:
+          - docker-build
+        steps:
+          - name: Deploy to staging
+            script: |
+              echo "Deploying to staging..."
+              echo "Health check..."
+              echo "Deploy complete"
+
+      report-to-buildbutler:
+        name: Report to Build Butler
+        depends-on:
+          - unit-tests
+        steps:
+          - name: Send results to Build Butler
+            script: |
+              curl -X POST "https://app.buildbutler.io/api/v1/results" \
+                -H "Authorization: Bearer %BUILDBUTLER_API_KEY%" \
+                -F "file=@build/test-results/combined/TEST-combined.xml"
+        artifacts:
+          use:
+            - name: test-results
+              path: build/test-results/combined/
+        run-if: always
