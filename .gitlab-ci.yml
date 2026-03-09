@@ -72,12 +72,13 @@ deploy:
 
 report-to-buildbutler:
   stage: report
+  image: node:20-alpine
+  when: always
+  variables:
+    TEST_RESULTS_GLOB: "build/test-results/combined/TEST-combined.xml"
   script:
-    - |
-      curl -X POST "https://app.buildbutler.dev/api/v1/results" \
-        -H "Authorization: Bearer $BUILDBUTLER_API_KEY" \
-        -F "file=@build/test-results/combined/TEST-combined.xml"
+    - npx --yes @buildbutler/gitlab-ci@latest
   needs:
     - job: unit-tests
       artifacts: true
-  when: always
+  allow_failure: true
