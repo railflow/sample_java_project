@@ -91,7 +91,7 @@ jobs:
         with:
           name: test-results
           path: build/test-results/combined/
-      - uses: railflow/buildbutler-action@v3
+      - uses: railflow/buildbutler-action@latest
         with:
           api-key: ${{ secrets.BUILDBUTLER_API_KEY }}
           github-token: ${{ github.token }}
