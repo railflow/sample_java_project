@@ -14,6 +14,7 @@ project {
     params {
         password("BUILDBUTLER_API_KEY", "credentialsJSON:buildbutler-api-key",
             label = "Build Butler API Key")
+        param("env.GRADLE_OPTS", "-Dorg.gradle.daemon=false")
     }
 
     buildType(UnitTests)
@@ -176,14 +177,15 @@ object Deploy : BuildType({
 object ReportToBuildButler : BuildType({
     name = "Report to Build Butler"
 
+    params {
+        param("env.TEST_RESULTS_GLOB", "build/test-results/combined/TEST-combined.xml")
+    }
+
     steps {
         script {
             name = "Send Results to Build Butler"
-            scriptContent = """
-                curl -X POST "https://app.buildbutler.dev/api/v1/results" \
-                  -H "Authorization: Bearer %BUILDBUTLER_API_KEY%" \
-                  -F "file=@build/test-results/combined/TEST-combined.xml"
-            """.trimIndent()
+            scriptContent = "npx --yes @buildbutler/gitlab-ci@1.0.4"
+            dockerImage = "node:20-alpine"
         }
     }
 
