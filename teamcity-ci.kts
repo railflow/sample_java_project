@@ -180,7 +180,7 @@ object ReportToBuildButler : BuildType({
         script {
             name = "Send Results to Build Butler"
             scriptContent = """
-                curl -X POST "https://app.buildbutler.io/api/v1/results" \
+                curl -X POST "https://app.buildbutler.dev/api/v1/results" \
                   -H "Authorization: Bearer %BUILDBUTLER_API_KEY%" \
                   -F "file=@build/test-results/combined/TEST-combined.xml"
             """.trimIndent()

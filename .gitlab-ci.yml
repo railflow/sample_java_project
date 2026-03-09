@@ -74,7 +74,7 @@ report-to-buildbutler:
   stage: report
   script:
     - |
-      curl -X POST "https://app.buildbutler.io/api/v1/results" \
+      curl -X POST "https://app.buildbutler.dev/api/v1/results" \
         -H "Authorization: Bearer $BUILDBUTLER_API_KEY" \
         -F "file=@build/test-results/combined/TEST-combined.xml"
   needs:
