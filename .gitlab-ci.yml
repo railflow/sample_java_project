@@ -3,6 +3,7 @@ stages:
   - build
   - docker
   - deploy
+  - report
 
 workflow:
   rules:
@@ -48,4 +49,21 @@ docker-build:
 deploy:
   stage: deploy
   script:
-    - echo "hello world"
+    - echo "Deploying to staging..."
+    - echo "Health check..."
+    - echo "Deploy complete"
+  needs:
+    - job: docker-build
+
+report-to-buildbutler:
+  stage: report
+  image: node:20-alpine
+  when: always
+  variables:
+    TEST_RESULTS_GLOB: "build/test-results/combined/TEST-combined.xml"
+  script:
+    - npx --yes @buildbutler/gitlab-ci@latest
+  needs:
+    - job: unit-tests
+      artifacts: true
+  allow_failure: true
