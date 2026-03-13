@@ -77,7 +77,7 @@ report-to-buildbutler:
   variables:
     TEST_RESULTS_GLOB: "build/test-results/combined/TEST-combined.xml"
   script:
-    - npx --yes @buildbutler/gitlab-ci@1.0.4
+    - npx --yes @buildbutler/gitlab-ci@latest
   needs:
     - job: unit-tests
       artifacts: true
