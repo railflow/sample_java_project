@@ -3,7 +3,6 @@ stages:
   - build
   - docker
   - deploy
-  - report
 
 workflow:
   rules:
@@ -38,47 +37,15 @@ unit-tests:
 
 build-jar:
   stage: build
-  image: eclipse-temurin:17-jdk
-  <<: *gradle-cache
   script:
-    - ./gradlew jar
-  artifacts:
-    name: app-jar
-    paths:
-      - build/libs/*.jar
-  needs:
-    - job: unit-tests
-      optional: true
+    - echo "hello world"
 
 docker-build:
   stage: docker
-  image: docker:latest
-  services:
-    - docker:dind
   script:
-    - docker build -t sample-java-project:$CI_COMMIT_SHA .
-  needs:
-    - job: build-jar
-      artifacts: true
+    - echo "hello world"
 
 deploy:
   stage: deploy
   script:
-    - echo "Deploying to staging..."
-    - echo "Health check..."
-    - echo "Deploy complete"
-  needs:
-    - job: docker-build
-
-report-to-buildbutler:
-  stage: report
-  image: node:20-alpine
-  when: always
-  variables:
-    TEST_RESULTS_GLOB: "build/test-results/combined/TEST-combined.xml"
-  script:
-    - npx --yes @buildbutler/gitlab-ci@1.0.4
-  needs:
-    - job: unit-tests
-      artifacts: true
-  allow_failure: true
+    - echo "hello world"
