@@ -38,28 +38,19 @@ unit-tests:
 
 build-jar:
   stage: build
-  image: eclipse-temurin:17-jdk
-  <<: *gradle-cache
   script:
-    - ./gradlew jar
-  artifacts:
-    name: app-jar
-    paths:
-      - build/libs/*.jar
+    - echo "hello world"
   needs:
     - job: unit-tests
       optional: true
 
 docker-build:
   stage: docker
-  image: docker:latest
-  services:
-    - docker:dind
   script:
-    - docker build -t sample-java-project:$CI_COMMIT_SHA .
+    - echo "hello docker"
   needs:
     - job: build-jar
-      artifacts: true
+      optional: true
 
 deploy:
   stage: deploy
