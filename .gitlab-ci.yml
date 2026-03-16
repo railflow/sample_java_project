@@ -3,7 +3,6 @@ stages:
   - build
   - docker
   - deploy
-  - report
 
 workflow:
   rules:
@@ -60,5 +59,3 @@ deploy:
     - echo "Deploy complete"
   needs:
     - job: docker-build
-
-
