@@ -40,11 +40,17 @@ build-jar:
   stage: build
   script:
     - echo "hello world"
+  needs:
+    - job: unit-tests
+      optional: true
 
 docker-build:
   stage: docker
   script:
-    - echo "hello world"
+    - echo "hello docker"
+  needs:
+    - job: build-jar
+      optional: true
 
 deploy:
   stage: deploy
