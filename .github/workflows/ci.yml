@@ -30,7 +30,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: junit-results
           path: build/test-results/combined/TEST-combined.xml
 
   build:
@@ -80,3 +80,19 @@ jobs:
           echo "Deploying to staging..."
           echo "Health check..."
           echo "Deploy complete"
+
+  report:
+    name: Report to Build Butler
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: junit-results
+          path: build/test-results/combined/
+      - uses: railflow/buildbutler-action@latest
+        with:
+          api-key: ${{ secrets.BUILDBUTLER_API_KEY }}
+          github-token: ${{ github.token }}
+          test-results: 'build/test-results/combined/TEST-combined.xml'
