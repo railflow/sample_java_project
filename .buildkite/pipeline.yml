@@ -1,0 +1,61 @@
+env:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+steps:
+  - label: "Unit Tests"
+    key: unit-tests
+    image: eclipse-temurin:17-jdk
+    command: ./gradlew mergeTestReports --continue
+    artifact_paths:
+      - "build/test-results/combined/TEST-combined.xml"
+    plugins:
+      - artifacts#v1.9.3:
+          upload: "build/test-results/combined/TEST-combined.xml"
+      - junit-annotate#v2.4.1:
+          artifacts: "build/test-results/combined/TEST-combined.xml"
+    cache:
+      paths:
+        - ".gradle/caches"
+        - ".gradle/wrapper"
+      key: "gradle-{{ os }}"
+    soft_fail: true
+
+  - label: "Build JAR"
+    key: build-jar
+    depends_on:
+      - step: unit-tests
+        allow_failure: true
+    image: eclipse-temurin:17-jdk
+    command: ./gradlew jar
+    artifact_paths:
+      - "build/libs/*.jar"
+    cache:
+      paths:
+        - ".gradle/caches"
+        - ".gradle/wrapper"
+      key: "gradle-{{ os }}"
+
+  - label: "Docker Build"
+    key: docker-build
+    depends_on: build-jar
+    image: docker:latest
+    command: docker build -t sample-java-project:${BUILDKITE_COMMIT} .
+
+  - label: "Deploy"
+    key: deploy
+    depends_on: docker-build
+    command: |
+      echo "Deploying to staging..."
+      echo "Health check..."
+      echo "Deploy complete"
+
+  - label: "Report to Build Butler"
+    key: report-to-buildbutler
+    depends_on:
+      - step: unit-tests
+        allow_failure: true
+    image: node:20-alpine
+    env:
+      TEST_RESULTS_GLOB: "build/test-results/combined/TEST-combined.xml"
+    command: npx --yes @buildbutler/gitlab-ci@1.0.4
+    soft_fail: true
