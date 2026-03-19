@@ -41,10 +41,3 @@ pipelines:
                 - echo "Health check..."
                 - echo "Deploy complete"
 
-          - step:
-              name: Report to Build Butler
-              trigger: automatic
-              image: node:20-alpine
-              script:
-                - export TEST_RESULTS_GLOB="build/test-results/**/*.xml"
-                - npx --yes @buildbutler/ci
