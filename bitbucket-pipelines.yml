@@ -1,0 +1,50 @@
+image: eclipse-temurin:17-jdk
+
+definitions:
+  caches:
+    gradle: ~/.gradle
+
+pipelines:
+  default:
+    - parallel:
+        fail-fast: false
+        steps:
+          - step:
+              name: Unit Tests
+              caches:
+                - gradle
+              script:
+                - ./gradlew mergeTestReports --continue
+              artifacts:
+                - build/test-results/combined/TEST-combined.xml
+
+          - step:
+              name: Build JAR
+              caches:
+                - gradle
+              script:
+                - ./gradlew jar
+              artifacts:
+                - build/libs/*.jar
+
+          - step:
+              name: Docker Build
+              services:
+                - docker
+              script:
+                - docker build -t sample-java-project:$BITBUCKET_COMMIT .
+
+          - step:
+              name: Deploy
+              script:
+                - echo "Deploying to staging..."
+                - echo "Health check..."
+                - echo "Deploy complete"
+
+          - step:
+              name: Report to Build Butler
+              trigger: automatic
+              image: node:20-alpine
+              script:
+                - export TEST_RESULTS_GLOB="build/test-results/**/*.xml"
+                - npx --yes @buildbutler/ci
